@@ -82,6 +82,17 @@ ipcMain.handle('is-polling', async () => {
     };
 });
 
+ipcMain.handle('scan-devices', async (event, { startAddress, endAddress }) => {
+    return await modbusHandler.scanDevices(startAddress, endAddress, (progress) => {
+        // Send progress updates to renderer
+        event.sender.send('scan-progress', progress);
+    });
+});
+
+ipcMain.handle('stop-scan', async () => {
+    return await modbusHandler.stopScan();
+});
+
 // Profile management handlers
 ipcMain.handle('load-profiles', async () => {
     return await profileManager.loadProfiles();

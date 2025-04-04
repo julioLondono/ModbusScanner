@@ -23,6 +23,13 @@ const readButton = document.getElementById('readButton');
 const startPolling = document.getElementById('startPolling');
 const pollingInterval = document.getElementById('pollingInterval');
 const responseDiv = document.getElementById('response');
+const startScan = document.getElementById('startScan');
+const stopScan = document.getElementById('stopScan');
+const startAddress = document.getElementById('startAddress');
+const endAddress = document.getElementById('endAddress');
+const scanProgress = document.querySelector('.progress-bar');
+const scanStatus = document.querySelector('.scan-status');
+const discoveredDevices = document.querySelector('.discovered-devices');
 
 let isConnected = false;
 
@@ -73,6 +80,8 @@ async function toggleConnection() {
                 connectButton.textContent = 'Disconnect';
                 readButton.disabled = false;
                 startPolling.disabled = false;
+                startScan.disabled = false;
+                stopScan.disabled = true;
             }
             showResponse(response);
         } else {
@@ -82,6 +91,8 @@ async function toggleConnection() {
                 connectButton.textContent = 'Connect';
                 readButton.disabled = true;
                 startPolling.disabled = true;
+                startScan.disabled = true;
+                stopScan.disabled = true;
                 if (startPolling.classList.contains('polling')) {
                     startPolling.click(); // Stop polling if active
                 }
@@ -340,6 +351,100 @@ refreshPortsButton.addEventListener('click', refreshPorts);
 connectButton.addEventListener('click', toggleConnection);
 readButton.addEventListener('click', readRegisters);
 startPolling.addEventListener('click', handlePolling);
+startScan.addEventListener('click', handleScan);
+stopScan.addEventListener('click', handleStopScan);
+
+// Listen for scan progress updates
+ipcRenderer.on('scan-progress', (event, progress) => {
+    scanProgress.style.width = `${progress.progress}%`;
+    scanStatus.textContent = `Scanning address ${progress.currentAddress}... ${progress.progress}%`;
+});
+
+async function handleStopScan() {
+    try {
+        startScan.disabled = true;
+        stopScan.disabled = true;
+        const response = await ipcRenderer.invoke('stop-scan');
+        showResponse(response);
+    } catch (error) {
+        showResponse({
+            success: false,
+            error: {
+                type: 'Stop Scan Error',
+                message: 'Failed to stop scan',
+                details: error.message,
+                suggestions: ['Try again', 'Restart application if issue persists']
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
+}
+
+async function handleScan() {
+    try {
+        // Clear previous results
+        discoveredDevices.innerHTML = '';
+        scanProgress.style.width = '0%';
+        scanStatus.textContent = 'Starting scan...';
+        startScan.disabled = true;
+        stopScan.disabled = false;
+
+        const start = parseInt(startAddress.value);
+        const end = parseInt(endAddress.value);
+
+        if (start > end) {
+            throw new Error('Start address must be less than or equal to end address');
+        }
+
+        if (start < 0 || end > 247) {
+            throw new Error('Address range must be between 0 and 247');
+        }
+
+        const response = await ipcRenderer.invoke('scan-devices', { startAddress: start, endAddress: end });
+
+        if (response.success) {
+            scanStatus.textContent = response.message;
+            response.data.forEach(device => {
+                const deviceElement = document.createElement('div');
+                deviceElement.className = 'device-item';
+                deviceElement.innerHTML = `
+                    <strong>Device Address: ${device.address}</strong>
+                    <div class="device-functions">
+                        Supported Functions:
+                        ${device.supportedFunctions.map(f => 
+                            `<span class="function-tag">${f.name}</span>`
+                        ).join('')}
+                    </div>
+                `;
+                discoveredDevices.appendChild(deviceElement);
+
+                // Add click handler to use this device
+                deviceElement.addEventListener('click', () => {
+                    slaveId.value = device.address;
+                });
+            });
+        } else {
+            scanStatus.textContent = 'Scan failed: ' + response.error.message;
+        }
+
+        showResponse(response);
+    } catch (error) {
+        scanStatus.textContent = 'Scan failed';
+        showResponse({
+            success: false,
+            error: {
+                type: 'Scan Error',
+                message: 'Failed to scan for devices',
+                details: error.message,
+                suggestions: ['Check address range', 'Verify device connections']
+            },
+            timestamp: new Date().toISOString()
+        });
+    } finally {
+        startScan.disabled = false;
+        stopScan.disabled = true;
+    }
+}
 
 // Listen for polling data and errors
 ipcRenderer.on('polling-data', (event, result) => {
