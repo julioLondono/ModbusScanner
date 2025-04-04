@@ -7,7 +7,8 @@
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "package-win": "electron-packager . MODscanator --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "keywords": [
     "modbus",
@@ -17,16 +18,24 @@
   ],
   "author": "Julio Londono",
   "license": "ISC",
-
   "build": {
     "appId": "com.modscanator.app",
+    "productName": "MODscanator",
+    "asar": false,
     "win": {
-      "target": "portable"
-    }
+      "target": "dir"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*"
+    ]
   },
   "devDependencies": {
     "electron": "^28.1.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2"
   },
   "dependencies": {
     "@serialport/bindings-cpp": "^13.0.1",
