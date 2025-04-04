@@ -7,68 +7,139 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 0 0 20px 0;
         }
         .main-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: 400px 1fr;
             gap: 20px;
-            max-width: 1400px;
+            height: calc(100vh - 80px);
+            max-width: 1800px;
             margin: 0 auto;
         }
         .container {
             background-color: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .left-panel {
-            flex: 0 0 400px;
-        }
-        .right-panel {
-            flex: 1;
-            min-width: 300px;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            overflow: hidden;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        .right-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
+            min-width: 600px;
         }
         .section {
-            padding: 15px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            margin: 0;
+            background: white;
+        }
+        .section h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+        .response-section {
+            overflow-y: auto;
         }
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         label {
             display: inline-block;
-            width: 120px;
-            margin-right: 10px;
+            width: 100px;
+            flex-shrink: 0;
         }
         select, input {
-            padding: 5px;
-            width: 200px;
+            padding: 4px 8px;
+            width: 150px;
+            height: 28px;
+            box-sizing: border-box;
         }
         button {
-            padding: 8px 16px;
+            padding: 4px 12px;
+            min-width: 80px;
+            height: 28px;
+            vertical-align: top;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
+            white-space: nowrap;
         }
-        .polling-controls, .scan-controls {
+        .modbus-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .modbus-controls .button-group {
+            display: flex;
+            gap: 8px;
+        }
+        .polling-interval {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
-        .scan-section {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .polling-interval input {
+            width: 80px;
+        }
+        .scan-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .scan-controls .form-group {
+            margin: 0;
+        }
+        .scan-controls .button-group {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
         }
         .scan-progress {
-            margin-top: 10px;
-            height: 20px;
-            background-color: #f5f5f5;
+            margin: 8px 0;
+            height: 16px;
+            background-color: #f0f0f0;
             border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        .scan-status {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .discovered-devices {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
             overflow: hidden;
         }
         .progress-bar {
@@ -131,131 +202,155 @@
         #profileName {
             width: 150px;
         }
-        .profile-buttons button {
-            margin-right: 5px;
+        .profile-section .profile-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .profile-section input,
+        .profile-section select {
+            flex: 1;
+        }
+        .response-section {
+            margin-bottom: 16px;
+        }
+        .response-section h2 {
+            margin: 0 0 8px 0;
+            font-size: 1.2em;
         }
         #response {
             font-family: monospace;
             white-space: pre-wrap;
-            padding: 10px;
+            padding: 8px;
             background-color: #f8f8f8;
             border: 1px solid #ddd;
-            max-height: 300px;
+            height: calc(100% - 40px);
             overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
-    <h1>Modbus RTU Slave Tester</h1>
+    <h1>MODscanator</h1>
     <div class="main-container">
         <div class="container left-panel">
-        
-        <div class="section">
-            <h2>Connection Profiles</h2>
-            <div class="form-group">
-                <label>Select profile:</label>
-                <select id="profileSelect"></select>
-                <button id="loadProfile">Load</button>
-                <button id="saveProfile" style="display: none;">Save</button>
-                <button id="deleteProfile" style="display: none;">Delete</button>
-            </div>
-            <div class="form-group">
-                <label>Enter Profile Name:</label>
-                <input type="text" id="profileName" placeholder="Enter profile name">
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Connection Settings</h2>
-            <div class="form-group">
-                <label>COM Port:</label>
-                <select id="portSelect"></select>
-                <button id="refreshPorts">Refresh</button>
-            </div>
-            <div class="form-group">
-                <label>Baud Rate:</label>
-                <select id="baudRate">
-                    <option value="1200">1200</option>
-                    <option value="2400">2400</option>
-                    <option value="4800">4800</option>
-                    <option value="9600" selected>9600</option>
-                    <option value="19200">19200</option>
-                    <option value="38400">38400</option>
-                    <option value="57600">57600</option>
-                    <option value="115200">115200</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Data Bits:</label>
-                <select id="dataBits">
-                    <option value="7">7</option>
-                    <option value="8" selected>8</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Stop Bits:</label>
-                <select id="stopBits">
-                    <option value="1" selected>1</option>
-                    <option value="2">2</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Parity:</label>
-                <select id="parity">
-                    <option value="none" selected>None</option>
-                    <option value="even">Even</option>
-                    <option value="odd">Odd</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Slave ID:</label>
-                <input type="number" id="slaveId" value="1" min="1" max="247">
-            </div>
-            <button id="connectButton">Connect</button>
-        </div>
-
-        <div class="section">
-            <h2>Modbus Commands</h2>
-            <div class="form-group">
-                <label>Function Code:</label>
-                <select id="functionCode">
-                    <option value="1">Read Coils (01)</option>
-                    <option value="2">Read Discrete Inputs (02)</option>
-                    <option value="3">Read Holding Registers (03)</option>
-                    <option value="4">Read Input Registers (04)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Start Address:</label>
-                <input type="number" id="address" value="0" min="0">
-            </div>
-            <div class="form-group">
-                <label>Quantity:</label>
-                <input type="number" id="length" value="1" min="1">
-            </div>
-            <div class="form-group">
-                <button id="readButton" disabled>Read Once</button>
-                <div class="polling-controls" style="margin-top: 10px;">
-                    <label for="pollingInterval">Polling Interval (ms):</label>
-                    <input type="number" id="pollingInterval" value="1000" min="100" step="100" style="width: 100px;">
-                    <button id="startPolling" disabled>Start Polling</button>
+            <div class="section">
+                <h2>Connection Profiles</h2>
+                <div class="form-group">
+                    <label>Profile Name:</label>
+                    <div class="profile-input-group">
+                        <input type="text" id="profileName" placeholder="Enter profile name">
+                        <button id="saveProfile">Save</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Select profile:</label>
+                    <div class="profile-input-group">
+                        <select id="profileSelect"></select>
+                        <button id="loadProfile">Load</button>
+                        <button id="deleteProfile">Delete</button>
+                    </div>
                 </div>
             </div>
 
+            <div class="section">
+                <h2>Connection Settings</h2>
+                <div class="form-group">
+                    <label>COM Port:</label>
+                    <select id="portSelect"></select>
+                    <button id="refreshPorts">Refresh</button>
+                </div>
+                <div class="form-group">
+                    <label>Baud Rate:</label>
+                    <select id="baudRate">
+                        <option value="1200">1200</option>
+                        <option value="2400">2400</option>
+                        <option value="4800">4800</option>
+                        <option value="9600" selected>9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data Bits:</label>
+                    <select id="dataBits">
+                        <option value="7">7</option>
+                        <option value="8" selected>8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Stop Bits:</label>
+                    <select id="stopBits">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Parity:</label>
+                    <select id="parity">
+                        <option value="none" selected>None</option>
+                        <option value="even">Even</option>
+                        <option value="odd">Odd</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Slave ID:</label>
+                    <input type="number" id="slaveId" value="1" min="1" max="247">
+                </div>
+                <button id="connectButton">Connect</button>
+            </div>
 
-        </div>
+            <div class="section">
+                <h2>Modbus Commands</h2>
+                <div class="form-group">
+                    <label>Function Code:</label>
+                    <select id="functionCode">
+                        <option value="1">Read Coils (01)</option>
+                        <option value="2">Read Discrete Inputs (02)</option>
+                        <option value="3">Read Holding Registers (03)</option>
+                        <option value="4">Read Input Registers (04)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Address:</label>
+                    <input type="number" id="address" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Quantity:</label>
+                    <input type="number" id="length" value="1" min="1">
+                </div>
+                <div class="form-group modbus-controls">
+                    <div class="button-group">
+                        <button id="readButton" disabled>Read Once</button>
+                        <button id="startPolling" disabled>Start Polling</button>
+                    </div>
+                    <div class="polling-interval">
+                        <label for="pollingInterval">Interval (ms):</label>
+                        <input type="number" id="pollingInterval" value="1000" min="100" step="100">
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="right-panel">
-            <div class="scan-section">
-                <h3>Device Discovery</h3>
+        <div class="container right-panel">
+            <div class="section">
+                <h2>Device Discovery</h2>
                 <div class="scan-controls">
-                    <label for="startAddress">Start Address:</label>
-                    <input type="number" id="startAddress" value="1" min="0" max="247" style="width: 80px;">
-                    <label for="endAddress">End Address:</label>
-                    <input type="number" id="endAddress" value="10" min="1" max="247" style="width: 80px;">
-                    <button id="startScan" disabled>Start Scan</button>
-                    <button id="stopScan" disabled>Stop Scan</button>
+                    <div class="form-group">
+                        <label>Start Address:</label>
+                        <input type="number" id="startAddress" value="1" min="0" max="247" style="width: 80px;">
+                    </div>
+                    <div class="form-group">
+                        <label>End Address:</label>
+                        <input type="number" id="endAddress" value="10" min="1" max="247" style="width: 80px;">
+                    </div>
+                    <div class="button-group">
+                        <button id="startScan" disabled>Start Scan</button>
+                        <button id="stopScan" disabled>Stop Scan</button>
+                    </div>
                 </div>
                 <div class="scan-progress">
                     <div class="progress-bar"></div>
@@ -264,7 +359,7 @@
                 <div class="discovered-devices"></div>
             </div>
 
-            <div class="section">
+            <div class="section response-section">
                 <h2>Response</h2>
                 <div id="response"></div>
             </div>

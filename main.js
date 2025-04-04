@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const ModbusHandler = require('./src/modbus-handler');
-const ProfileManager = require('./src/profile-manager');
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import ModbusHandler from './src/modbus-handler.js';
+import ProfileManager from './src/profile-manager.js';
 
 let mainWindow;
 let profileManager;
@@ -18,8 +18,7 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
-    // For development
-    mainWindow.webContents.openDevTools();
+
 }
 
 // This method will be called when Electron has finished initialization
