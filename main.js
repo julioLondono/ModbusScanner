@@ -1,8 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const ModbusHandler = require('./src/modbus-handler');
+const ProfileManager = require('./src/profile-manager');
 
 let mainWindow;
+let profileManager;
 const modbusHandler = new ModbusHandler();
 
 function createWindow() {
@@ -22,6 +24,7 @@ function createWindow() {
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
+    profileManager = new ProfileManager();
     createWindow();
 
     app.on('activate', function () {
@@ -53,4 +56,17 @@ ipcMain.handle('read-registers', async (event, { address, length, functionCode }
 
 ipcMain.handle('write-register', async (event, { address, value }) => {
     return await modbusHandler.writeRegister(address, value);
+});
+
+// Profile management handlers
+ipcMain.handle('load-profiles', async () => {
+    return await profileManager.loadProfiles();
+});
+
+ipcMain.handle('save-profile', async (event, profile) => {
+    return await profileManager.saveProfile(profile);
+});
+
+ipcMain.handle('delete-profile', async (event, profileName) => {
+    return await profileManager.deleteProfile(profileName);
 });

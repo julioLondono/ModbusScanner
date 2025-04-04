@@ -1,5 +1,6 @@
 const ModbusRTU = require('modbus-serial');
 const { SerialPort } = require('serialport');
+const { formatModbusError } = require('./error-handler');
 
 class ModbusHandler {
     constructor() {
@@ -9,20 +10,28 @@ class ModbusHandler {
 
     async listPorts() {
         try {
-            // Using the static method directly from SerialPort class
             const ports = await SerialPort.list();
-            console.log('Available ports:', ports); // Debug log
-            return ports.map(port => ({
-                path: port.path,
-                manufacturer: port.manufacturer || 'Unknown',
-                serialNumber: port.serialNumber || 'N/A',
-                pnpId: port.pnpId || 'N/A',
-                vendorId: port.vendorId || 'N/A',
-                productId: port.productId || 'N/A'
-            }));
+            console.log('Available ports:', ports);
+            return {
+                success: true,
+                data: ports.map(port => ({
+                    path: port.path,
+                    manufacturer: port.manufacturer || 'Unknown',
+                    serialNumber: port.serialNumber || 'N/A',
+                    pnpId: port.pnpId || 'N/A',
+                    vendorId: port.vendorId || 'N/A',
+                    productId: port.productId || 'N/A'
+                })),
+                timestamp: new Date().toISOString()
+            };
         } catch (error) {
             console.error('Error listing ports:', error);
-            throw error;
+            const formattedError = formatModbusError(error);
+            return {
+                success: false,
+                error: formattedError,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 
@@ -41,11 +50,20 @@ class ModbusHandler {
 
             this.client.setID(parseInt(config.slaveId));
             this.connected = true;
-            return { success: true, message: 'Connected successfully' };
+            return {
+                success: true,
+                message: `Connected to ${config.port} at ${config.baudRate} baud`,
+                timestamp: new Date().toISOString()
+            };
         } catch (error) {
             console.error('Connection error:', error);
             this.connected = false;
-            throw error;
+            const formattedError = formatModbusError(error);
+            return {
+                success: false,
+                error: formattedError,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 
@@ -64,12 +82,20 @@ class ModbusHandler {
 
     async readRegisters(address, length, functionCode) {
         if (!this.connected) {
-            throw new Error('Not connected to device');
+            return {
+                success: false,
+                error: {
+                    type: 'Connection Error',
+                    message: 'Not connected to device',
+                    suggestions: ['Connect to a device before reading registers']
+                },
+                timestamp: new Date().toISOString()
+            };
         }
 
         try {
             let result;
-            switch (functionCode) {
+            switch (parseInt(functionCode)) {
                 case 1:
                     result = await this.client.readCoils(address, length);
                     break;
@@ -88,11 +114,17 @@ class ModbusHandler {
             return {
                 success: true,
                 data: result.data,
-                buffer: result.buffer
+                buffer: result.buffer,
+                timestamp: new Date().toISOString()
             };
         } catch (error) {
             console.error('Read error:', error);
-            throw error;
+            const formattedError = formatModbusError(error);
+            return {
+                success: false,
+                error: formattedError,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 

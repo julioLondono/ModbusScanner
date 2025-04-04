@@ -8,13 +8,22 @@
             margin: 20px;
             background-color: #f5f5f5;
         }
+        .main-container {
+            display: flex;
+            gap: 20px;
+        }
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .left-panel {
+            flex: 0 0 400px;
+        }
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
         }
         .section {
             margin-bottom: 20px;
@@ -45,6 +54,15 @@
         button:disabled {
             background-color: #cccccc;
         }
+        #profileSelect {
+            width: 150px;
+        }
+        #profileName {
+            width: 150px;
+        }
+        .profile-buttons button {
+            margin-right: 5px;
+        }
         #response {
             font-family: monospace;
             white-space: pre-wrap;
@@ -57,9 +75,25 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Modbus RTU Slave Tester</h1>
+    <h1>Modbus RTU Slave Tester</h1>
+    <div class="main-container">
+        <div class="container left-panel">
         
+        <div class="section">
+            <h2>Connection Profiles</h2>
+            <div class="form-group">
+                <label>Select profile:</label>
+                <select id="profileSelect"></select>
+                <button id="loadProfile">Load</button>
+                <button id="saveProfile" style="display: none;">Save</button>
+                <button id="deleteProfile" style="display: none;">Delete</button>
+            </div>
+            <div class="form-group">
+                <label>Enter Profile Name:</label>
+                <input type="text" id="profileName" placeholder="Enter profile name">
+            </div>
+        </div>
+
         <div class="section">
             <h2>Connection Settings</h2>
             <div class="form-group">
@@ -131,9 +165,12 @@
             <button id="readButton" disabled>Read</button>
         </div>
 
-        <div class="section">
-            <h2>Response</h2>
-            <div id="response"></div>
+        </div>
+        <div class="container right-panel">
+            <div class="section">
+                <h2>Response</h2>
+                <div id="response"></div>
+            </div>
         </div>
     </div>
     <script src="renderer.js"></script>
