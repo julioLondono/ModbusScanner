@@ -1,5 +1,5 @@
 {
-  "name": "modbus-rtu-slave-tester",
+  "name": "modscanator",
   "version": "1.0.0",
   "description": "Desktop application for testing Modbus RTU slave devices",
   "main": "main.js",
@@ -18,7 +18,7 @@
   "license": "ISC",
   "type": "commonjs",
   "build": {
-    "appId": "com.modbusscanner.app",
+    "appId": "com.modscanator.app",
     "win": {
       "target": "portable"
     }

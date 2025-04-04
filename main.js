@@ -18,8 +18,6 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
-    // For development
-    mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished initialization
