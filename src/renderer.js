@@ -196,12 +196,21 @@ async function loadProfiles() {
         const response = await ipcRenderer.invoke('load-profiles');
         if (response.success) {
             profileSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'Select a profile...';
+            profileSelect.appendChild(option);
+
             response.data.forEach(profile => {
                 const option = document.createElement('option');
                 option.value = profile.name;
                 option.textContent = profile.name;
                 profileSelect.appendChild(option);
             });
+
+            // Show/hide buttons based on selection
+            const hasSelection = profileSelect.value !== '';
+            deleteProfileButton.style.display = hasSelection ? 'inline' : 'none';
         } else {
             showResponse(response);
         }
@@ -225,12 +234,14 @@ async function loadProfile() {
         if (response.success) {
             const selectedProfile = response.data.find(p => p.name === profileSelect.value);
             if (selectedProfile) {
-                portSelect.value = selectedProfile.port;
-                baudRate.value = selectedProfile.baudRate;
-                dataBits.value = selectedProfile.dataBits;
-                stopBits.value = selectedProfile.stopBits;
-                parity.value = selectedProfile.parity;
-                slaveId.value = selectedProfile.slaveId;
+                // Update UI with profile settings
+                portSelect.value = selectedProfile.port || '';
+                baudRate.value = selectedProfile.baudRate || '9600';
+                dataBits.value = selectedProfile.dataBits || '8';
+                stopBits.value = selectedProfile.stopBits || '1';
+                parity.value = selectedProfile.parity || 'none';
+                slaveId.value = selectedProfile.slaveId || '1';
+                
                 showResponse({
                     success: true,
                     message: `Profile '${selectedProfile.name}' loaded successfully`,
@@ -346,6 +357,10 @@ async function deleteProfile() {
     }
 }
 
+// Initial setup
+refreshPorts(); // Load ports on startup
+loadProfiles(); // Load profiles on startup
+
 // Event listeners
 refreshPortsButton.addEventListener('click', refreshPorts);
 connectButton.addEventListener('click', toggleConnection);
@@ -446,6 +461,11 @@ async function handleScan() {
     }
 }
 
+// Listen for profile updates
+ipcRenderer.on('connection-saved', () => {
+    loadProfiles(); // Refresh profile list when a new profile is saved
+});
+
 // Listen for polling data and errors
 ipcRenderer.on('polling-data', (event, result) => {
     showResponse(result);
@@ -508,8 +528,18 @@ deleteProfileButton.addEventListener('click', deleteProfile);
 profileName.addEventListener('input', () => {
     const hasText = profileName.value.trim().length > 0;
     saveProfileButton.style.display = hasText ? 'inline-block' : 'none';
-    deleteProfileButton.style.display = hasText ? 'inline-block' : 'none';
 });
+
+profileSelect.addEventListener('change', () => {
+    const selectedProfile = profileSelect.value.trim();
+    deleteProfileButton.style.display = selectedProfile ? 'inline-block' : 'none';
+});
+
+loadProfileButton.addEventListener('click', loadProfile);
+
+// Initial button states
+saveProfileButton.style.display = 'none';
+deleteProfileButton.style.display = 'none';
 
 // Initial loads
 refreshPorts();

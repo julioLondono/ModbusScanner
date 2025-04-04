@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const ModbusHandler = require('./src/modbus-handler');
-const ProfileManager = require('./src/profile-manager');
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import ModbusHandler from './src/modbus-handler.js';
+import ProfileManager from './src/profile-manager.js';
 
 let mainWindow;
 let profileManager;
