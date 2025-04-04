@@ -58,6 +58,30 @@ ipcMain.handle('write-register', async (event, { address, value }) => {
     return await modbusHandler.writeRegister(address, value);
 });
 
+ipcMain.handle('start-polling', async (event, config) => {
+    config.onData = (result) => {
+        // Send data back to renderer process
+        event.sender.send('polling-data', result);
+    };
+    config.onError = (error) => {
+        // Send error back to renderer process
+        event.sender.send('polling-error', error);
+    };
+    return await modbusHandler.startPolling(config);
+});
+
+ipcMain.handle('stop-polling', async () => {
+    return await modbusHandler.stopPolling();
+});
+
+ipcMain.handle('is-polling', async () => {
+    return {
+        success: true,
+        data: modbusHandler.isPolling(),
+        timestamp: new Date().toISOString()
+    };
+});
+
 // Profile management handlers
 ipcMain.handle('load-profiles', async () => {
     return await profileManager.loadProfiles();

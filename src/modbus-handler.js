@@ -6,6 +6,8 @@ class ModbusHandler {
     constructor() {
         this.client = new ModbusRTU();
         this.connected = false;
+        this.pollingInterval = null;
+        this.currentPollConfig = null;
     }
 
     async listPorts() {
@@ -69,6 +71,7 @@ class ModbusHandler {
 
     async disconnect() {
         try {
+            this.stopPolling(); // Stop polling before disconnecting
             if (this.connected) {
                 await this.client.close();
                 this.connected = false;
@@ -78,6 +81,73 @@ class ModbusHandler {
             console.error('Disconnection error:', error);
             throw error;
         }
+    }
+
+    startPolling(config) {
+        if (!this.connected) {
+            return {
+                success: false,
+                error: {
+                    type: 'Connection Error',
+                    message: 'Not connected to device',
+                    suggestions: ['Connect to a device before starting polling']
+                },
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Stop any existing polling
+        this.stopPolling();
+
+        this.currentPollConfig = config;
+        const interval = Math.max(100, config.interval); // Minimum 100ms interval
+
+        this.pollingInterval = setInterval(async () => {
+            try {
+                const result = await this.readRegisters(
+                    config.address,
+                    config.length,
+                    config.functionCode
+                );
+                if (config.onData) {
+                    config.onData(result);
+                }
+            } catch (error) {
+                if (config.onError) {
+                    config.onError(error);
+                }
+                // Stop polling on error
+                this.stopPolling();
+            }
+        }, interval);
+
+        return {
+            success: true,
+            message: `Started polling at ${interval}ms intervals`,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+            this.currentPollConfig = null;
+            return {
+                success: true,
+                message: 'Polling stopped',
+                timestamp: new Date().toISOString()
+            };
+        }
+        return {
+            success: true,
+            message: 'Polling was not active',
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    isPolling() {
+        return this.pollingInterval !== null;
     }
 
     async readRegisters(address, length, functionCode) {

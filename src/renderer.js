@@ -20,6 +20,8 @@ const functionCode = document.getElementById('functionCode');
 const address = document.getElementById('address');
 const length = document.getElementById('length');
 const readButton = document.getElementById('readButton');
+const startPolling = document.getElementById('startPolling');
+const pollingInterval = document.getElementById('pollingInterval');
 const responseDiv = document.getElementById('response');
 
 let isConnected = false;
@@ -70,6 +72,7 @@ async function toggleConnection() {
                 isConnected = true;
                 connectButton.textContent = 'Disconnect';
                 readButton.disabled = false;
+                startPolling.disabled = false;
             }
             showResponse(response);
         } else {
@@ -78,6 +81,10 @@ async function toggleConnection() {
                 isConnected = false;
                 connectButton.textContent = 'Connect';
                 readButton.disabled = true;
+                startPolling.disabled = true;
+                if (startPolling.classList.contains('polling')) {
+                    startPolling.click(); // Stop polling if active
+                }
             }
             showResponse(response);
         }
@@ -332,6 +339,62 @@ async function deleteProfile() {
 refreshPortsButton.addEventListener('click', refreshPorts);
 connectButton.addEventListener('click', toggleConnection);
 readButton.addEventListener('click', readRegisters);
+startPolling.addEventListener('click', handlePolling);
+
+// Listen for polling data and errors
+ipcRenderer.on('polling-data', (event, result) => {
+    showResponse(result);
+});
+
+ipcRenderer.on('polling-error', (event, error) => {
+    showResponse({
+        success: false,
+        error,
+        timestamp: new Date().toISOString()
+    });
+});
+
+async function handlePolling() {
+    try {
+        if (startPolling.classList.contains('polling')) {
+            // Stop polling
+            const result = await ipcRenderer.invoke('stop-polling');
+            showResponse(result);
+            startPolling.textContent = 'Start Polling';
+            startPolling.classList.remove('polling');
+            readButton.disabled = false;
+        } else {
+            // Start polling
+            const config = {
+                address: parseInt(address.value),
+                length: parseInt(length.value),
+                functionCode: parseInt(functionCode.value),
+                interval: parseInt(pollingInterval.value)
+            };
+
+            const result = await ipcRenderer.invoke('start-polling', config);
+            if (result.success) {
+                showResponse(result);
+                startPolling.textContent = 'Stop Polling';
+                startPolling.classList.add('polling');
+                readButton.disabled = true; // Disable manual read while polling
+            } else {
+                showResponse(result);
+            }
+        }
+    } catch (error) {
+        showResponse({
+            success: false,
+            error: {
+                type: 'Polling Error',
+                message: 'Failed to start/stop polling',
+                details: error.message,
+                suggestions: ['Check device connection', 'Try a longer polling interval']
+            },
+            timestamp: new Date().toISOString()
+        });
+    }
+}
 loadProfileButton.addEventListener('click', loadProfile);
 saveProfileButton.addEventListener('click', saveProfile);
 deleteProfileButton.addEventListener('click', deleteProfile);

@@ -49,6 +49,21 @@
             color: white;
             border: none;
             border-radius: 4px;
+        }
+        .polling-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #startPolling.polling {
+            background-color: #d32f2f;
+        }
+        #startPolling.polling:hover {
+            background-color: #b71c1c;
+        }
+        #pollingInterval {
+            width: 100px !important;
+        
             cursor: pointer;
         }
         button:disabled {
@@ -162,7 +177,14 @@
                 <label>Quantity:</label>
                 <input type="number" id="length" value="1" min="1">
             </div>
-            <button id="readButton" disabled>Read</button>
+            <div class="form-group">
+                <button id="readButton" disabled>Read Once</button>
+                <div class="polling-controls" style="margin-top: 10px;">
+                    <label for="pollingInterval">Polling Interval (ms):</label>
+                    <input type="number" id="pollingInterval" value="1000" min="100" step="100" style="width: 100px;">
+                    <button id="startPolling" disabled>Start Polling</button>
+                </div>
+            </div>
         </div>
 
         </div>
